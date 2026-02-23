@@ -34,16 +34,23 @@ public class RequestResponseLoggingMiddleware
             var finishedAt = DateTime.UtcNow;
             var responseBodyText = await ReadResponseBodyAsync(context.Response, context.RequestAborted);
 
-            _logger.LogInformation(
-                "HTTP {Method} {Path} responded {StatusCode} in {ElapsedMs} ms (Started: {StartedAt}, Finished: {FinishedAt})\nRequestBody: {RequestBody}\nResponseBody: {ResponseBody}",
-                context.Request.Method,
-                context.Request.Path,
-                context.Response.StatusCode,
-                stopwatch.ElapsedMilliseconds,
-                startedAt,
-                finishedAt,
-                requestBody,
-                responseBodyText);
+            using (_logger.BeginScope(new Dictionary<string, object?>
+            {
+                ["RequestBody"] = requestBody,
+                ["ResponseBody"] = responseBodyText
+            }))
+            {
+                _logger.LogInformation(
+                    "HTTP {Method} {Path} responded {StatusCode} in {ElapsedMs} ms (Started: {StartedAt}, Finished: {FinishedAt})\nRequestBody: {RequestBody}\nResponseBody: {ResponseBody}",
+                    context.Request.Method,
+                    context.Request.Path,
+                    context.Response.StatusCode,
+                    stopwatch.ElapsedMilliseconds,
+                    startedAt,
+                    finishedAt,
+                    requestBody,
+                    responseBodyText);
+            }
 
             responseBody.Seek(0, SeekOrigin.Begin);
             await responseBody.CopyToAsync(originalBodyStream, context.RequestAborted);
