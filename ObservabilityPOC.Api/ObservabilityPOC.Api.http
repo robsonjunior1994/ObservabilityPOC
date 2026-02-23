@@ -1,0 +1,6 @@
+@ObservabilityPOC.Api_HostAddress = http://localhost:5112
+
+GET {{ObservabilityPOC.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
