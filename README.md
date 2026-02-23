@@ -61,3 +61,11 @@ Para monitorar sua API .NET 8, você vai:
 3. Visualizar traces, métricas e logs na UI
 
 ---
+
+# 📡 Para subir o banco de dados
+
+1. Criar migration se ela ainda não existir: dotnet ef migrations add InitialCreate
+2. Subir migrations: dotnet ef database update
+3. Caso não funcione atualize o: dotnet ef database update
+
+---
