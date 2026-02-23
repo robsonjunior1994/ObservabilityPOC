@@ -33,7 +33,12 @@ builder.Logging.AddOpenTelemetry(logging =>
 });
 
 builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource.AddService("ObservabilityPOC.Api"))
+    .ConfigureResource(resource => resource
+        .AddService("ObservabilityPOC.Api")
+        .AddAttributes(new[]
+        {
+            new KeyValuePair<string, object>("host.name", Environment.MachineName)
+        }))
     .WithTracing(tracing => tracing
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
