@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ObservabilityPOC.Api.Data;
+using ObservabilityPOC.Api.Middleware;
 using ObservabilityPOC.Api.Repositories;
 using ObservabilityPOC.Api.Services;
 
@@ -26,6 +27,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<RequestResponseLoggingMiddleware>();
 
 app.UseHttpsRedirection();
 
