@@ -67,6 +67,7 @@ public class TicketsController : ControllerBase
         {
             "Validation" => BadRequest(response),
             "NotFound" => NotFound(response),
+            "Database" => StatusCode(StatusCodes.Status503ServiceUnavailable, response),
             _ => StatusCode(StatusCodes.Status500InternalServerError, response)
         };
     }
