@@ -20,6 +20,19 @@ public class RequestResponseLoggingMiddleware
 
         var requestBody = await ReadRequestBodyAsync(context.Request, context.RequestAborted);
 
+        using (_logger.BeginScope(new Dictionary<string, object?>
+        {
+            ["RequestBody"] = requestBody
+        }))
+        {
+            _logger.LogInformation(
+                "HTTP {Method} {Path} started (Started: {StartedAt})\nRequestBody: {RequestBody}",
+                context.Request.Method,
+                context.Request.Path,
+                startedAt,
+                requestBody);
+        }
+
         var originalBodyStream = context.Response.Body;
         await using var responseBody = new MemoryStream();
         context.Response.Body = responseBody;
@@ -36,19 +49,17 @@ public class RequestResponseLoggingMiddleware
 
             using (_logger.BeginScope(new Dictionary<string, object?>
             {
-                ["RequestBody"] = requestBody,
                 ["ResponseBody"] = responseBodyText
             }))
             {
                 _logger.LogInformation(
-                    "HTTP {Method} {Path} responded {StatusCode} in {ElapsedMs} ms (Started: {StartedAt}, Finished: {FinishedAt})\nRequestBody: {RequestBody}\nResponseBody: {ResponseBody}",
+                    "HTTP {Method} {Path} responded {StatusCode} in {ElapsedMs} ms (Started: {StartedAt}, Finished: {FinishedAt})\nResponseBody: {ResponseBody}",
                     context.Request.Method,
                     context.Request.Path,
                     context.Response.StatusCode,
                     stopwatch.ElapsedMilliseconds,
                     startedAt,
                     finishedAt,
-                    requestBody,
                     responseBodyText);
             }
 

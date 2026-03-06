@@ -11,11 +11,13 @@ public class TicketsController : ControllerBase
 {
     private readonly ITicketService _service;
     private readonly ILogger<TicketsController> _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
 
-    public TicketsController(ITicketService service, ILogger<TicketsController> logger)
+    public TicketsController(ITicketService service, ILogger<TicketsController> logger, IHttpClientFactory httpClientFactory)
     {
         _service = service;
         _logger = logger;
+        _httpClientFactory = httpClientFactory;
     }
 
     [HttpPost]
@@ -38,6 +40,32 @@ public class TicketsController : ControllerBase
     {
         var response = await _service.GetByIdAsync(id, cancellationToken);
         return ToActionResult(response);
+    }
+
+    [HttpGet("httpbin")]
+    public async Task<IActionResult> CallHttpBin(CancellationToken cancellationToken)
+    {
+        var client = _httpClientFactory.CreateClient();
+
+        try
+        {
+            _logger.LogInformation("Calling httpbin GET endpoint");
+            using var response = await client.GetAsync("https://httpbin.org/status/500", cancellationToken);
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("httpbin call failed with status {StatusCode}. Body: {Body}", (int)response.StatusCode, body);
+                return StatusCode((int)response.StatusCode, new { error = "httpbin call failed", body });
+            }
+
+            return Ok(body);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "httpbin call threw an exception");
+            return StatusCode(StatusCodes.Status502BadGateway, new { error = "httpbin call failed" });
+        }
     }
 
     [HttpPut("{id:int}")]
