@@ -22,6 +22,7 @@ var healthMeter = new Meter("ObservabilityPOC.Health");
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHttpClient();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -35,13 +36,20 @@ builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<AppDbContext>("database");
 
+var hostName = builder.Configuration["Observability:HostName"] ?? Environment.MachineName;
+
 // =========================
 // 🔹 OpenTelemetry - Logs
 // =========================
 builder.Logging.AddOpenTelemetry(logging =>
 {
     logging.SetResourceBuilder(
-        ResourceBuilder.CreateDefault().AddService("ObservabilityPOC.Api"));
+        ResourceBuilder.CreateDefault()
+            .AddService("ObservabilityPOC.Api")
+            .AddAttributes(new[]
+            {
+                new KeyValuePair<string, object>("host.name", hostName)
+            }));
 
     logging.IncludeScopes = true;
     logging.ParseStateValues = true;
@@ -61,7 +69,7 @@ builder.Services.AddOpenTelemetry()
         .AddService("ObservabilityPOC.Api")
         .AddAttributes(new[]
         {
-            new KeyValuePair<string, object>("host.name", Environment.MachineName)
+            new KeyValuePair<string, object>("host.name", hostName)
         }))
     .WithTracing(tracing => tracing
         .SetSampler(new AlwaysOnSampler())
